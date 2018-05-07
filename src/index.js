@@ -128,23 +128,14 @@ function calculator(number = 0) {
     }
 
     let obj = {
+
         sum: function () {
-            let argSum = 0;
 
-            for (let i = 0; i < arguments.length; i++) {
-                argSum += arguments[i];
-            }
-
-            return number + argSum;
+            return number + [...arguments].reduce((a, b) => a + b);
         },
         dif: function () {
-            let argSum = 0;
 
-            for (let i = 0; i < arguments.length; i++) {
-                argSum += arguments[i];
-            }
-
-            return number - argSum;
+            return number - [...arguments].reduce((a, b) => a + b);
         },
         div: function () {
             let result = number / arguments[0];
@@ -163,14 +154,10 @@ function calculator(number = 0) {
         },
 
         mul: function () {
-            let result = number * arguments[0];
+            arguments[0] = number * arguments[0];
 
-            for (let i = 1; i < arguments.length; i++) {
+            return [...arguments].reduce((a, b) => a * b);
 
-                result = result * arguments[i]
-            }
-
-            return result;
         }
 
     };
