@@ -103,6 +103,13 @@ function slice(array, from, to) {
  */
 function createProxy(obj) {
 
+    return new Proxy(obj, {
+        set(obj, prop, value) {
+            obj[prop] = value * value;
+
+            return true;
+        }
+    });
 }
 
 export {
