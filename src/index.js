@@ -60,14 +60,8 @@ function returnFnResult(fn) {
    console.log(f()); // выведет 13
  */
 
-function returnCounter(number) {
-    number = number || 0;
-
-    return function F() {
-        number++;
-
-        return number;
-    }
+function returnCounter(number = 0) {
+    return () => number += 1;
 }
 
 /*
@@ -80,13 +74,7 @@ function returnCounter(number) {
    returnArgumentsArray(1, 2, 3) вернет [1, 2, 3]
  */
 function returnArgumentsArray() {
-    let args = [];
-
-    for (let i = 0; i < arguments.length; i++) {
-        args[i] = arguments[i];
-    }
-
-    return args;
+    return [...arguments];
 }
 
 /*
@@ -105,16 +93,7 @@ function returnArgumentsArray() {
    console.log(newSum()) выведет 6
  */
 function bindFunction(fn) {
-    let args = [];
-
-    for (let i = 1; i < arguments.length; i++) {
-        args[i] = arguments[i];
-    }
-    args.shift();
-
-    return function() {
-        return fn.apply(null, args);
-    }
+    return () => fn.apply(null, [...arguments].slice(1));
 }
 
 export {
