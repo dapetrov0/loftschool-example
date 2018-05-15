@@ -11,7 +11,11 @@
    createDivWithText('loftschool') // создаст элемент div, поместит в него 'loftschool' и вернет созданный элемент
  */
 function createDivWithText(text) {
-    return document.createElement('div').innerText(text);
+    let div = document.createElement('div');
+
+    div.textContent = text;
+
+    return div;
 
 }
 
@@ -24,7 +28,7 @@ function createDivWithText(text) {
    prepend(document.querySelector('#one'), document.querySelector('#two')) // добавит элемент переданный первым аргументом в начало элемента переданного вторым аргументом
  */
 function prepend(what, where) {
-    where.insertBefore(what, where.children[0])
+    where.insertBefore(what, where.childNodes[0])
 }
 
 /*
@@ -145,19 +149,51 @@ function deleteTextNodesRecursive(where) {
    }
  */
 function collectDOMStat(root) {
-    const obj = {};
+    let obj = {
+        tags: {},
+        classes: {},
+        texts: 0
+    };
 
-    for (let i = 0; i < root.childNodes.length; i++) {
-        if (root.childNodes[i].nodeType === 3) {
-            obj.texts = i++;
+    function fnCollection(root) {
+        let elements = root.childNodes;
+
+        for (let i = 0; i < elements.length; i++) {
+            // если элемент текст
+            if (elements[i].nodeType === 3) {
+                obj.texts = obj.texts + 1;
+            } else {
+                // считаем классы
+                let elementClasses = elements[i].classList;
+
+                if (elementClasses.length > 0) {
+                    for (let i = 0; i < elementClasses.length; i++) {
+                        if (elementClasses[i] in obj.classes) {
+                            obj.classes[elementClasses[i]] = obj.classes[elementClasses[i]] + 1;
+                        } else {
+                            obj.classes[elementClasses[i]] = 1;
+                        }
+                    }
+                }
+            }
+
+            if (elements[i].nodeType === 1) {
+                // считаем теги
+                let elementTag = elements[i].tagName;
+
+                if (elementTag in obj.tags) {
+                    obj.tags[elementTag] = obj.tags[elementTag] + 1;
+                } else {
+                    obj.tags[elementTag] = 1;
+                }
+
+                fnCollection(elements[i]);
+            }
         }
 
-    for (let i = 0; i < root.classlist.length; i++){
-            obj.tags = i;
     }
 
-    }
-
+    fnCollection(root);
 
     return obj;
 }
@@ -195,6 +231,41 @@ function collectDOMStat(root) {
    }
  */
 function observeChildNodes(where, fn) {
+    let obServer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            let type = null;
+            let nodes = [];
+
+            if (mutation.addedNodes.length > 0) {
+                type = 'insert';
+                for (let i = 0; i < mutation.addedNodes.length; i++) {
+                    nodes.push(mutation.addedNodes[i]);
+                }
+
+                fn({
+                    type,
+                    nodes
+                });
+            }
+
+            if (mutation.removedNodes.length > 0) {
+                type = 'remove';
+                for (let i = 0; i < mutation.removedNodes.length; i++) {
+                    nodes.push(mutation.removedNodes[i]);
+                }
+
+                fn({
+                    type,
+                    nodes
+                });
+            }
+        });
+    });
+
+    obServer.observe(where, {
+        childList: true,
+        subtree: true
+    });
 }
 
 export {
