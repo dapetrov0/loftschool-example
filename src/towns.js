@@ -36,7 +36,52 @@ const homeworkContainer = document.querySelector('#homework-container');
  Массив городов пожно получить отправив асинхронный запрос по адресу
  https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json
  */
+
 function loadTowns() {
+    let url = 'https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json';
+
+    return new Promise((resolve, reject) => {
+        // 1. Создаем новый объект XMLHttpRequest
+        const xhr = new XMLHttpRequest();
+
+        // 2. Подготовка запроса, конфигурация
+        xhr.open('GET', url);
+
+        // 3. Вешаем событие загрузки
+        xhr.addEventListener('load', function () {
+            if (xhr.status === 200) {
+                let towns = null;
+
+                try {
+                    towns = JSON.parse(this.response);
+                } catch (e) {
+                    throw new Error('Что-то пошло не так')
+                }
+
+                const sortFunc = function (a, b) {
+                    if (a.name > b.name) {
+                        return 1;
+                    } else if (a.name < b.name) {
+                        return -1;
+                    }
+
+                    return 0;
+                };
+
+                resolve(towns.sort(sortFunc));
+            } else {
+                const error = new Error(this.statusText);
+
+                error.code = this.status;
+                reject(error);
+            }
+        });
+
+        xhr.addEventListener('error', () => reject(new Error('Ошибка сети')));
+
+        // 4. Отсылаем запрос
+        xhr.send();
+    });
 }
 
 /*
@@ -50,7 +95,15 @@ function loadTowns() {
    isMatching('Moscow', 'SCO') // true
    isMatching('Moscow', 'Moscov') // false
  */
+
 function isMatching(full, chunk) {
+    // ~str.inexOf означает "не равно -1"
+
+    if (~full.toLowerCase().indexOf(chunk.toLowerCase())) {
+        return true;
+    }
+
+    return false;
 }
 
 /* Блок с надписью "Загрузка" */
@@ -62,8 +115,56 @@ const filterInput = homeworkContainer.querySelector('#filter-input');
 /* Блок с результатами поиска */
 const filterResult = homeworkContainer.querySelector('#filter-result');
 
-filterInput.addEventListener('keyup', function() {
-    // это обработчик нажатия кливиш в текстовом поле
+/* Блок с сообщением, что загрузка не удалась*/
+
+const errorBlock = homeworkContainer.querySelector('#error-block');
+const repeatBtn = homeworkContainer.querySelector('#repeat-btn');
+
+// Функция, которая будет вызываться при положительном разрешении промиса
+
+function loadResolve(data) {
+    // показываем блок с поиском
+    filterBlock.style.display = 'block';
+
+    // скрываем блок загрузки
+    loadingBlock.style.display = 'none';
+
+    // вешаем обработчик собитый на нажатие клавиши и выводим города
+
+    filterInput.addEventListener('keyup', (event) => {
+        let value = event.target.value;
+
+        filterResult.innerHTML = '';
+
+        if (value) {
+            for (let town of data) {
+                if (isMatching(town.name, value)) {
+                    filterResult.innerHTML += `<div>${town.name}</div>`;
+                }
+            }
+        }
+    });
+}
+
+// Функция, которая будет вызываться при положительном разрешении промиса
+
+function loadReject() {
+    // скрываем блок загрузки
+    loadingBlock.style.display = 'none';
+    // показываем блок ошибки
+    errorBlock.style.display = 'block';
+}
+
+loadTowns()
+    .then((data) => loadResolve(data))
+    .catch((error) => loadReject(error));
+
+// Вешаем обработчик событий на повторную загрузку городов
+
+repeatBtn.addEventListener('click', () => {
+    loadTowns()
+        .then((data) => loadResolve(data))
+        .catch((error) => loadReject(error));
 });
 
 export {
