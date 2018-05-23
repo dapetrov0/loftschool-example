@@ -34,13 +34,20 @@ function createDiv() {
     const randomWidth = getRand(10, 200);
     const randomHeight = getRand(10, 200);
 
-    newDiv.style.position = 'absolute';
-    newDiv.style.width = getRand(10, 200) + 'px';
-    newDiv.style.height = getRand(10, 150) + 'px';
-    newDiv.style.top = getRand(0, window.innerHeight - randomHeight) + 'px';
-    newDiv.style.left = getRand(0, window.innerWidth - randomWidth) + 'px';
-    newDiv.style.backgroundColor = `rgba(${getRand(0, 255)},${getRand(0, 255)},${getRand(0, 255)}) `;
+    // newDiv.style.position = 'absolute';
+    // newDiv.style.width = getRand(10, 200) + 'px';
+    // newDiv.style.height = getRand(10, 150) + 'px';
+    // newDiv.style.top = getRand(0, window.innerHeight - randomHeight) + 'px';
+    // newDiv.style.left = getRand(0, window.innerWidth - randomWidth) + 'px';
+    // newDiv.style.backgroundColor = `rgba(${getRand(0, 255)},${getRand(0, 255)},${getRand(0, 255)}) `;
 
+    newDiv.style.cssText = `
+        position: absolute;
+        width: ${randomWidth}px;
+        height: ${randomHeight}px;
+        top: ${getRand(0, window.innerHeight - randomHeight)}px;
+        left: ${getRand(0, window.innerWidth - randomWidth)}px;
+        background-color: rgba(${getRand(0, 255)},${getRand(0, 255)},${getRand(0, 255)})`;
 
     function getRand(min, max) {
         return min + Math.floor(Math.random() * (max + 1 - min))
