@@ -49,12 +49,12 @@ filterNameInput.addEventListener('keyup', function () {
     // здесь можно обработать нажатия на клавиши внутри текстового поля для фильтрации cookie
 });
 
+
 addButton.addEventListener('click', () => {
 
-    let cookies = getCookies();
+    let cookies = parseCookies();
 
     if (addNameInput.value && addValueInput.value) {
-
         document.cookie = `${addNameInput.value}=${addValueInput.value}`;
         if (!(addNameInput.value in cookies)) {
             listTable.innerHTML +=
@@ -65,35 +65,75 @@ addButton.addEventListener('click', () => {
         </tr>`;
             addNameInput.value = '';
             addValueInput.value = '';
-        } else {
-            for (let i = 0; i < listTable.children.length; i++) {
-                for (let j = 0; i < listTable.children[i].length; j++) {
-                    if (listTable.children[i][j].textContent === addNameInput.value ) {
-                        listTable.children[i][j].nextSibling.textContent = addValueInput.value
-                    }
-                }
-            }
         }
-
     }
 
 });
 
-function getCookies() {
+document.addEventListener('DOMContentLoaded', () => {
+    renderCookiesTable(parseCookies());
+});
 
-    const cookies = document.cookie.split('; ').reduce((prev, curr) => {
+function parseCookies() {
+
+    // Получаем массив из cookies, где каждый элемент - это строка вида "key=value"
+    const cookies = document.cookie.split('; ');
+
+    // Перебираем элементы массива
+
+    let cookiesObj = cookies.reduce((prev, curr) => {
+        // на каждой итерации присваиваем переменной name значение до "=", а
+        // переменной value значение после "="
+
         const [name, value] = curr.split('=');
 
+        // Заносим в объект имя куки и значение
         prev[name] = value;
 
+        // возвращаем управление и передаем объект prev на каждой итерации
         return prev;
-    }, {});
+    }, {}); // <--- в качестве initialValue передаем пустой объект
 
-    return cookies;
+    return cookiesObj; // возвращаем управление и передаем предеаем объект cookies
+}
+
+function renderCookiesTable(obj) {
+    // Очищаем listTable от элементов
+
+    listTable.innerHTML = '';
+
+    for (let name in obj) {
+        listTable.innerHTML +=
+            `<tr>
+                <td>${name}</td>
+                <td>${obj[name]}</td>
+                <td><button class="delete-button">Удалить</button></td>
+            </tr>`;
+    }
+}
+
+function writeCookies(obj) {
+    let array = [];
+
+    for (let prop in obj) {
+        array.push(`${prop}=${obj[prop]}`)
+    }
+    document.cookie = array.join(';');
 }
 
 listTable.addEventListener('click', (e) => {
     if (e.target.tagName === 'BUTTON') {
-        e.target.parentNode.parentNode.remove();
+
+        let trParent = e.target.parentElement.parentElement;
+
+        let cookiesObj = parseCookies();
+
+        let trName = [...trParent.children][0].textContent;
+
+        delete cookiesObj[trName];
+
+        writeCookies(cookiesObj);
+
+        console.log(document.cookie)
     }
 });
