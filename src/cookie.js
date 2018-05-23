@@ -112,6 +112,7 @@ function renderCookiesTable(obj) {
     }
 }
 
+
 function writeCookies(obj) {
     let array = [];
 
