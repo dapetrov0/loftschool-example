@@ -44,24 +44,52 @@ const addButton = homeworkContainer.querySelector('#add-button');
 const listTable = homeworkContainer.querySelector('#list-table tbody');
 
 
-filterNameInput.addEventListener('keyup', function () {
-    // здесь можно обработать нажатия на клавиши внутри текстового поля для фильтрации cookie
-});
-
-
-addButton.addEventListener('click', () => {
+filterNameInput.addEventListener('keyup', (e) => {
+    let value = e.target.value;
 
     let cookies = parseCookies();
 
+    if (value) {
+        listTable.innerHTML = '';
+        for (let name in cookies) {
+            if (isMatching(name, value) || isMatching(cookies[name], value) ) {
+                renderCookie(name, cookies[name])
+            }
+        }
+    } else {
+        renderCookiesTable(parseCookies())
+    }
+
+});
+
+addButton.addEventListener('click', () => {
+
     let cookieName = addNameInput.value;
     let cookieValue = addValueInput.value;
+    let inputValue = filterNameInput.value;
 
-    if (cookieName && cookieValue) {
+    if (cookieName && cookieValue && !inputValue) {
         setCookie(cookieName, cookieValue);
         renderCookiesTable(parseCookies());
         addNameInput.value = '';
         addValueInput.value = '';
+    } else {
+        setCookie(cookieName, cookieValue);
+        let cookies = parseCookies();
+
+        if (inputValue) {
+            listTable.innerHTML = '';
+            for (let name in cookies) {
+                if (isMatching(name, inputValue) || isMatching(cookies[name], inputValue) ) {
+                    renderCookie(name, cookies[name])
+                }
+            }
+        }
+
+        addNameInput.value = '';
+        addValueInput.value = '';
     }
+
 
 });
 
@@ -99,14 +127,18 @@ function renderCookiesTable(obj) {
 
     if (document.cookie !== '') {
         for (let name in obj) {
-            listTable.innerHTML +=
-                `<tr>
-                <td>${name}</td>
-                <td>${obj[name]}</td>
-                <td><button class="delete-button">Удалить</button></td>
-            </tr>`;
+            renderCookie(name, obj[name])
         }
     }
+}
+
+function renderCookie(name, value) {
+    listTable.innerHTML +=
+        `<tr>
+           <td>${name}</td>
+           <td>${value}</td>
+           <td><button class="delete-button">Удалить</button></td>
+        </tr>`;
 }
 
 function setCookie(name, value, options) {
@@ -127,7 +159,7 @@ function setCookie(name, value, options) {
 
     value = encodeURIComponent(value);
 
-    let updatedCookie = name + "=" + value;
+    let updatedCookie = name + '=' + value;
 
     for (let propName in options) {
         updatedCookie += '; ' + propName;
@@ -160,3 +192,12 @@ listTable.addEventListener('click', (e) => {
 
     }
 });
+
+function isMatching(full, chunk) {
+
+    if (~full.toLowerCase().indexOf(chunk.toLowerCase())) {
+        return true;
+    }
+
+    return false;
+}
