@@ -43,7 +43,6 @@ const addButton = homeworkContainer.querySelector('#add-button');
 // таблица со списком cookie
 const listTable = homeworkContainer.querySelector('#list-table tbody');
 
-const deleteBtn = homeworkContainer.querySelectorAll('.delete-button');
 
 filterNameInput.addEventListener('keyup', function () {
     // здесь можно обработать нажатия на клавиши внутри текстового поля для фильтрации cookie
@@ -54,18 +53,14 @@ addButton.addEventListener('click', () => {
 
     let cookies = parseCookies();
 
-    if (addNameInput.value && addValueInput.value) {
-        document.cookie = `${addNameInput.value}=${addValueInput.value}`;
-        if (!(addNameInput.value in cookies)) {
-            listTable.innerHTML +=
-                `<tr>
-            <td>${addNameInput.value}</td>
-            <td>${addValueInput.value}</td>
-            <td><button class="delete-button">Удалить</button></td>
-        </tr>`;
-            addNameInput.value = '';
-            addValueInput.value = '';
-        }
+    let cookieName = addNameInput.value;
+    let cookieValue = addValueInput.value;
+
+    if (cookieName && cookieValue) {
+        setCookie(cookieName, cookieValue);
+        renderCookiesTable(parseCookies());
+        addNameInput.value = '';
+        addValueInput.value = '';
     }
 
 });
@@ -102,24 +97,54 @@ function renderCookiesTable(obj) {
 
     listTable.innerHTML = '';
 
-    for (let name in obj) {
-        listTable.innerHTML +=
-            `<tr>
+    if (document.cookie !== '') {
+        for (let name in obj) {
+            listTable.innerHTML +=
+                `<tr>
                 <td>${name}</td>
                 <td>${obj[name]}</td>
                 <td><button class="delete-button">Удалить</button></td>
             </tr>`;
+        }
     }
 }
 
+function setCookie(name, value, options) {
+    options = options || {};
 
-function writeCookies(obj) {
-    let array = [];
+    let expires = options.expires;
 
-    for (let prop in obj) {
-        array.push(`${prop}=${obj[prop]}`)
+    if (typeof expires == 'number' && expires) {
+
+        let d = new Date();
+
+        d.setTime(d.getTime() + expires * 1000);
+        expires = options.expires = d;
     }
-    document.cookie = array.join(';');
+    if (expires && expires.toUTCString) {
+        options.expires = expires.toUTCString();
+    }
+
+    value = encodeURIComponent(value);
+
+    let updatedCookie = name + "=" + value;
+
+    for (let propName in options) {
+        updatedCookie += '; ' + propName;
+        let propValue = options[propName];
+
+        if (propValue !== true) {
+            updatedCookie += '=' + propValue;
+        }
+    }
+
+    document.cookie = updatedCookie;
+}
+
+function deleteCookie(name) {
+    setCookie(name, '', {
+        expires: -1
+    })
 }
 
 listTable.addEventListener('click', (e) => {
@@ -127,14 +152,11 @@ listTable.addEventListener('click', (e) => {
 
         let trParent = e.target.parentElement.parentElement;
 
-        let cookiesObj = parseCookies();
-
         let trName = [...trParent.children][0].textContent;
 
-        delete cookiesObj[trName];
+        deleteCookie(trName);
 
-        writeCookies(cookiesObj);
+        renderCookiesTable(parseCookies());
 
-        console.log(document.cookie)
     }
 });
