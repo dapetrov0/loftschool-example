@@ -43,10 +43,161 @@ const addButton = homeworkContainer.querySelector('#add-button');
 // таблица со списком cookie
 const listTable = homeworkContainer.querySelector('#list-table tbody');
 
-filterNameInput.addEventListener('keyup', function() {
-    // здесь можно обработать нажатия на клавиши внутри текстового поля для фильтрации cookie
+
+filterNameInput.addEventListener('keyup', (e) => {
+    let value = e.target.value;
+
+    let cookies = parseCookies();
+
+    if (value) {
+        listTable.innerHTML = '';
+        for (let name in cookies) {
+            if (isMatching(name, value) || isMatching(cookies[name], value) ) {
+                renderCookie(name, cookies[name])
+            }
+        }
+    } else {
+        renderCookiesTable(parseCookies())
+    }
+
 });
 
 addButton.addEventListener('click', () => {
-    // здесь можно обработать нажатие на кнопку "добавить cookie"
+
+    let cookieName = addNameInput.value;
+    let cookieValue = addValueInput.value;
+    let inputValue = filterNameInput.value;
+
+    if (cookieName && cookieValue && !inputValue) {
+        setCookie(cookieName, cookieValue);
+        renderCookiesTable(parseCookies());
+        addNameInput.value = '';
+        addValueInput.value = '';
+    } else {
+        setCookie(cookieName, cookieValue);
+        let cookies = parseCookies();
+
+        if (inputValue) {
+            listTable.innerHTML = '';
+            for (let name in cookies) {
+                if (isMatching(name, inputValue) || isMatching(cookies[name], inputValue) ) {
+                    renderCookie(name, cookies[name])
+                }
+            }
+        }
+
+        addNameInput.value = '';
+        addValueInput.value = '';
+    }
+
+
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderCookiesTable(parseCookies());
+});
+
+function parseCookies() {
+
+    // Получаем массив из cookies, где каждый элемент - это строка вида "key=value"
+    const cookies = document.cookie.split('; ');
+
+    // Перебираем элементы массива
+
+    let cookiesObj = cookies.reduce((prev, curr) => {
+        // на каждой итерации присваиваем переменной name значение до "=", а
+        // переменной value значение после "="
+
+        const [name, value] = curr.split('=');
+
+        // Заносим в объект имя куки и значение
+        prev[name] = value;
+
+        // возвращаем управление и передаем объект prev на каждой итерации
+        return prev;
+    }, {}); // <--- в качестве initialValue передаем пустой объект
+
+    return cookiesObj; // возвращаем управление и передаем предеаем объект cookies
+}
+
+function renderCookiesTable(obj) {
+    // Очищаем listTable от элементов
+
+    listTable.innerHTML = '';
+
+    if (document.cookie !== '') {
+        for (let name in obj) {
+            renderCookie(name, obj[name])
+        }
+    }
+}
+
+function renderCookie(name, value) {
+    listTable.innerHTML +=
+        `<tr>
+           <td>${name}</td>
+           <td>${value}</td>
+           <td><button class="delete-button">Удалить</button></td>
+        </tr>`;
+}
+
+function setCookie(name, value, options) {
+    options = options || {};
+
+    let expires = options.expires;
+
+    if (typeof expires == 'number' && expires) {
+
+        let d = new Date();
+
+        d.setTime(d.getTime() + expires * 1000);
+        expires = options.expires = d;
+    }
+    if (expires && expires.toUTCString) {
+        options.expires = expires.toUTCString();
+    }
+
+    value = encodeURIComponent(value);
+
+    let updatedCookie = name + '=' + value;
+
+    for (let propName in options) {
+        updatedCookie += '; ' + propName;
+        let propValue = options[propName];
+
+        if (propValue !== true) {
+            updatedCookie += '=' + propValue;
+        }
+    }
+
+    document.cookie = updatedCookie;
+}
+
+function deleteCookie(name) {
+    setCookie(name, '', {
+        expires: -1
+    })
+}
+
+listTable.addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON') {
+
+        let trParent = e.target.parentElement.parentElement;
+
+        let trName = [...trParent.children][0].textContent;
+
+        deleteCookie(trName);
+
+        renderCookiesTable(parseCookies());
+
+    }
+});
+
+function isMatching(full, chunk) {
+
+    if (~full.toLowerCase().indexOf(chunk.toLowerCase())) {
+        return true;
+    }
+
+    return false;
+}
